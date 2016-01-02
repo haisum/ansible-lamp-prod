@@ -1,0 +1,39 @@
+---
+
+- name: Install sshpass and rsync
+  apt: name="{{item}}"
+  with_items:
+    - rsync
+    - sshpass
+  when: restore_is_remote
+
+- name: Install percona xtrabackup utility
+  apt: name="percona-xtrabackup"
+
+- name: Get qpress
+  get_url: url="http://www.quicklz.com/qpress-11-linux-x64.tar" dest="/tmp/qpress.tar"
+
+- name: Extract qpress tar to /usr/local/bin
+  command: tar -xf /tmp/qpress.tar chdir=/usr/local/bin/ creates=/usr/local/bin/qpress
+
+- name: Copy backup script to server
+  template: src=usr-bin-mysqlbackup.j2 dest=/usr/bin/mysqlbackup mode=0700
+
+- name: Make sure backup directory exists
+  file: path="{{restore_local_path}}" mode=0700 state=directory
+
+- name: Take first full backup
+  shell: mysqlbackup full
+
+- name: Setup cronjob for hourly incremental backups
+  cron: 
+    name  : Incremental backup of database each hour
+    job   : mysqlbackup incremental
+    minute : 0
+
+- name: Setup cronjob for hourly incremental backups
+  cron: 
+    name  : Full backup of database at midnight
+    job   : mysqlbackup full
+    hour : 0
+    minute: 0

@@ -1,0 +1,1 @@
+-- This file contains ddl and dml for our website's database

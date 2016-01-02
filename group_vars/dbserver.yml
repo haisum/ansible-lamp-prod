@@ -1,0 +1,14 @@
+---
+
+mysql_root_password: qwerty
+# This database may be used by your web app
+mysql_db_name: myappdb
+mysql_db_user: myappdbuser
+mysql_db_user_password: myappdbpassword1!*
+
+restore_local_path: /tmp/backup
+restore_is_remote: false
+restore_remote_password: vagrant
+remote_rsync_options: "-P 2222"
+restore_remote_user: vagrant
+restore_remote_host: 127.0.0.1

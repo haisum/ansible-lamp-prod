@@ -1,0 +1,55 @@
+---
+
+- name: Install mysql package
+  apt: name={{item}}
+  with_items:
+    - mysql-client
+    - mysql-server
+    - python-mysqldb
+
+- name: Copy mysql configuration file
+  template: src=etc-mysql-my.cnf.j2 dest=/etc/mysql/my.cnf mode=0600
+
+- name: MySQL Set the root password.
+  mysql_user: user=root password="{{ mysql_root_password }}" host=localhost
+
+- name: MySQL Config for easy access as root user
+  template: src=root-.my.cnf.j2 dest=/root/.my.cnf mode=0600
+
+- name: MySQL Delete anonymous MySQL server user for {{ item }}
+  mysql_user: user="" host="{{ hostvars[item]['ansible_eth0']['ipv4']['address'] }}" state="absent"
+  with_items: groups.webserver
+
+- name: MySQL Delete anonymous MySQL server user for localhost
+  mysql_user: user="" state="absent"
+
+- name: MySQL Secure the MySQL root user for IPV6 localhost (::1)
+  mysql_user: user="root" password="{{ mysql_root_password }}" host="::1"
+
+- name: MySQL Secure the MySQL root user for IPV4 localhost (127.0.0.1)
+  mysql_user: user="root" password="{{ mysql_root_password }}" host="127.0.0.1"
+
+- name: MySQL Secure the MySQL root user for localhost domain (localhost)
+  mysql_user: user="root" password="{{ mysql_root_password }}" host="localhost"
+
+- name: MySQL create database {{ mysql_db_name }}
+  mysql_db: name="{{ mysql_db_name }}"
+
+- name: MySQL copy dump file
+  copy: src="dump.sql" dest="/tmp/dump.sql"
+
+- name: MySQL dump file dump.sql in {{ mysql_db_name }}
+  mysql_db: name="{{ mysql_db_name }}" state=import target="/tmp/dump.sql"
+
+- name: MySQL Secure the MySQL {{ mysql_db_user }} user for {{ hostvars[item]['ansible_eth0']['ipv4']['address'] }} host
+  mysql_user: user="{{ mysql_db_user }}" priv="{{ mysql_db_name }}.*:ALL" password="{{ mysql_db_user_password }}" host="{{ item }}"
+  with_items: groups.webserver
+
+- name: MySQL Secure the MySQL {{ mysql_db_user }} user for localhost/127.0.0.1 domain
+  mysql_user: user="{{ mysql_db_user }}" priv="{{ mysql_db_name }}.*:ALL" password="{{ mysql_db_user_password }}" host="{{ item }}"
+  with_items:
+    - localhost
+    - 127.0.0.1
+
+- name: MySQL Remove the MySQL test database
+  mysql_db: db=test state=absent

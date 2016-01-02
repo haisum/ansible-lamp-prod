@@ -1,0 +1,35 @@
+---
+- name: Install apache server and other required packages
+  apt: name={{ item }} state=present
+  with_items:
+    - apache2
+    - unzip
+    - tar
+    - gzip
+
+- name: Make sure apache starts at reboot
+  service: name=apache2 enabled=yes
+
+- name: Disable default apache site
+  command: a2dissite 000-default
+
+- name: Copy virtual host file
+  template: src=etc-apache2-sites-available-server.conf.j2 dest=/etc/apache2/sites-available/server.conf
+
+
+- name: Make sure root dir exists
+  file: path="{{ apache_root_dir }}" state=directory mode=0775
+
+- name: Enable new site
+  command: a2ensite server
+  notify: restart apache
+
+- name: Extract source code from source.zip to {{ apache_root_dir }}
+  unarchive: src=source.zip dest={{apache_root_dir}}
+
+- name: Set permissions on apache root directory
+  file: path="{{ apache_root_dir }}" state=directory mode=0775 owner=www-data group=www-data recurse=yes
+
+- name: Enable apache rewrite and ssl modules
+  command: a2enmod rewrite ssl
+  notify: restart apache

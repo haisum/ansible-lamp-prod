@@ -1,0 +1,15 @@
+---
+
+apache_server_admin: admin
+apache_server_alias: admin@localhost
+apache_root_dir: /var/www/html
+
+php_display_errors: Off
+php_error_reporting: "E_ALL & ~E_DEPRECATED & ~E_STRICT"
+php_upload_max_filesize: "2M"
+php_post_max_size: "8M"
+
+ftp_user: myftp_user
+ftp_password: myftp_password
+#Must be one directory behind apache root dir
+ftp_root: /var/www

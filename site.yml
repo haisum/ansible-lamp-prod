@@ -1,0 +1,11 @@
+---
+- hosts: webserver
+  roles:
+    - php
+    - apache
+    - ftp
+
+- hosts: dbserver
+  roles:
+    - mysql
+    - backupcron
